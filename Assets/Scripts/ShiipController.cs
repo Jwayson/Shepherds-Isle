@@ -1,85 +1,52 @@
 using UnityEngine;
+using UnityEngine.AI;
 
 public class ShiipController : MonoBehaviour
 {
-    public float speed = 5f;
-    private bool isMovingLeft = false;
-    private bool isMovingRight = false;
-    private bool isMovingForward = false;
-    private bool isMovingBackward = false;
-    private GameObject mainCamera;
-    
+    private NavMeshAgent agent;
+    public Animator anim;
+    public float radius = 10f;
+    public float idleTime = 3f;
+    private float idleTimer;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        mainCamera = Camera.main.gameObject.transform.parent.gameObject; 
+        agent = GetComponent<NavMeshAgent>();
+        PickRandomPoint();
     }
 
     // Update is called once per frame
     void Update()
     {
-        //left-right movement
-        // detect if the A key is being pressed
-        if (Input.GetAxis("Horizontal") == -1)
+        if (agent.pathPending)
         {
-            isMovingLeft = true;
+            return;
         }
 
-        // detect if the D key is being pressed
-        if (Input.GetAxis("Horizontal") == 1)
+        if (agent.remainingDistance <= agent.stoppingDistance)
         {
-            isMovingRight = true;
+            idleTimer += Time.deltaTime;
+            anim.SetBool("Walking", false);
+            if (idleTimer >= idleTime)
+            {
+                idleTimer = 0f;
+                PickRandomPoint();
+            }
         }
 
-        if (Input.GetAxis("Horizontal") == 0)
-        {
-            isMovingLeft = false;
-            isMovingRight = false;
-        }
-
-        // forward and back movement
-        // detect if the W key is being pressed
-        if (Input.GetAxis("Vertical") == 1)
-        {
-            isMovingForward = true;
-        }
-
-        // detect if the S key is being pressed
-        if (Input.GetAxis("Vertical") == -1)
-        {
-            isMovingBackward = true;
-        }
-
-        if (Input.GetAxis("Vertical") == 0)
-        {
-            isMovingForward = false;
-            isMovingBackward = false;
-        }
+        
     }
 
-    // fixed update is called once per physics tick
-    void FixedUpdate()
+    //pickRandomPoint... picks a random point.
+    void PickRandomPoint()
     {
-        
-        if (isMovingLeft)
+        Vector3 randomDirection = Random.insideUnitSphere * radius;
+        randomDirection += transform.position;
+        if (NavMesh.SamplePosition(randomDirection, out NavMeshHit hit, radius, NavMesh.AllAreas))
         {
-            transform.Translate(-mainCamera.transform.right * speed * Time.fixedDeltaTime);
+            agent.SetDestination(hit.position);
+            anim.SetBool("Walking", true);
         }
-
-        if (isMovingRight)
-        {
-            transform.Translate(mainCamera.transform.right * speed * Time.fixedDeltaTime);
-        }
-
-        if (isMovingForward)
-        {
-            transform.Translate(mainCamera.transform.forward * speed * Time.fixedDeltaTime);
-        }
-
-        if (isMovingBackward)
-        {
-            transform.Translate(-mainCamera.transform.forward * speed * Time.fixedDeltaTime);
-        }
-
     }
 }
