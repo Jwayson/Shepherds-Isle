@@ -1,52 +1,74 @@
 using UnityEngine;
 using UnityEngine.AI;
 
+[RequireComponent(typeof(NavMeshAgent))]
 public class ShiipController : MonoBehaviour
 {
-    private NavMeshAgent agent;
+    protected NavMeshAgent agent;
+
     public Animator anim;
+
+    [Header("Wandering")]
     public float radius = 10f;
     public float idleTime = 3f;
-    private float idleTimer;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    protected float idleTimer;
+
+    protected virtual void Start()
     {
         agent = GetComponent<NavMeshAgent>();
+
+        // Make Shiip naturally avoid each other.
+        agent.obstacleAvoidanceType = ObstacleAvoidanceType.HighQualityObstacleAvoidance;
+        agent.avoidancePriority = Random.Range(30, 70);
+
         PickRandomPoint();
     }
 
-    // Update is called once per frame
-    void Update()
+    protected virtual void Update()
     {
         if (agent.pathPending)
-        {
             return;
-        }
 
         if (agent.remainingDistance <= agent.stoppingDistance)
         {
             idleTimer += Time.deltaTime;
-            anim.SetBool("Walking", false);
+
+            SetWalking(false);
+
             if (idleTimer >= idleTime)
             {
                 idleTimer = 0f;
                 PickRandomPoint();
             }
         }
-
-        
+        else
+        {
+            SetWalking(true);
+        }
     }
 
-    //pickRandomPoint... picks a random point.
-    void PickRandomPoint()
+    protected virtual void PickRandomPoint()
     {
         Vector3 randomDirection = Random.insideUnitSphere * radius;
+        randomDirection.y = 0f;
+
         randomDirection += transform.position;
-        if (NavMesh.SamplePosition(randomDirection, out NavMeshHit hit, radius, NavMesh.AllAreas))
+
+        if (NavMesh.SamplePosition(
+            randomDirection,
+            out NavMeshHit hit,
+            radius,
+            NavMesh.AllAreas))
         {
             agent.SetDestination(hit.position);
-            anim.SetBool("Walking", true);
+            SetWalking(true);
         }
+    }
+
+    protected void SetWalking(bool walking)
+    {
+        if (anim != null)
+            anim.SetBool("walking", walking);
     }
 }
