@@ -459,6 +459,9 @@ MonoBehaviour:
   speed: 5
   rotationSpeed: 10
   anim: {fileID: 919132147578499163}
+  cursorMask:
+    serializedVersion: 2
+    m_Bits: 1
 --- !u!4 &226122554
 Transform:
   m_ObjectHideFlags: 0
